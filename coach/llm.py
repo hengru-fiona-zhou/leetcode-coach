@@ -18,66 +18,42 @@ from __future__ import annotations
 import json
 from typing import Any
 
-MODEL = "claude-opus-4-8"
+import os
+import urllib.request
+import urllib.error
 
+MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:3b")
 
 class LLMError(RuntimeError):
-    """Raised when the model call fails or the SDK is missing."""
-
-
-def _client():
-    try:
-        import anthropic
-    except ImportError as exc:  # pragma: no cover - environment dependent
-        raise LLMError(
-            "The 'anthropic' package is required. Install it with:\n"
-            "    pip install anthropic"
-        ) from exc
-    try:
-        return anthropic.Anthropic()
-    except Exception as exc:  # pragma: no cover - environment dependent
-        raise LLMError(
-            "Could not initialise the Anthropic client. Set ANTHROPIC_API_KEY "
-            "or run `ant auth login`.\n"
-            f"Original error: {exc}"
-        ) from exc
-
-
-def _first_text(response: Any) -> str:
-    for block in response.content:
-        if block.type == "text":
-            return block.text
-    raise LLMError("Model returned no text content.")
-
+    """Raised when the local model call fails."""
 
 def _call_structured(system: str, user: str, schema: dict[str, Any]) -> dict[str, Any]:
-    client = _client()
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user + "\nReturn JSON matching this schema:\n" + json.dumps(schema)}
+        ],
+        "format": schema,
+        "stream": False,
+        "options": {"temperature": 0, "num_ctx": 8192},
+    }
+
+    request = urllib.request.Request(
+        "http://127.0.0.1:11434/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
     try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=8000,
-            thinking={"type": "adaptive"},
-            system=system,
-            messages=[{"role": "user", "content": user}],
-            output_config={"format": {"type": "json_schema", "schema": schema}},
-        )
-    except Exception as exc:  # pragma: no cover - environment dependent
-        if type(exc).__name__ == "NotFoundError":
-            raise LLMError(
-                f"Model {MODEL!r} was not found for this account. "
-                "Check your API access."
-            ) from exc
-        raise LLMError(f"Model request failed: {exc}") from exc
-
-    if response.stop_reason == "refusal":
-        raise LLMError("The model declined to respond to this request.")
-
-    text = _first_text(response)
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError as exc:  # pragma: no cover - defensive
-        raise LLMError(f"Model returned invalid JSON: {text[:200]}") from exc
-
+        with urllib.request.urlopen(request, timeout=240) as response:
+            result = json.load(response)
+        return json.loads(result["message"]["content"])
+    except urllib.error.URLError as exc:
+        raise LLMError(f"Ollama connection failed: {exc}") from exc
+    except (KeyError, ValueError, TypeError) as exc:
+        raise LLMError(f"Invalid model response: {exc}") from exc
 
 # --------------------------------------------------------------------------- #
 # Plan generation

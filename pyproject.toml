@@ -9,7 +9,7 @@ description = "An AI coach that decides exactly what LeetCode problem you should
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.40",
+    
 ]
 
 [project.scripts]
