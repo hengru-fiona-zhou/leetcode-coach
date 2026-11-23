@@ -1,5 +1,7 @@
 # AI Daily LeetCode Coach
 
+This fork replaces the original Claude API integration with a locally hosted Qwen model through Ollama. It allows users to generate personalized LeetCode practice plans and track their progress without paid API access.
+
 An AI coach that decides exactly what you should practice each day. Not a
 tracker, not a dashboard — a coach. You only ever do two things:
 
