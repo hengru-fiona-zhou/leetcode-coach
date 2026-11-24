@@ -19,3 +19,6 @@ last_plan.json
 *.swp
 .idea/
 .vscode/
+
+.streamlit/secrets.toml
+*.bak
