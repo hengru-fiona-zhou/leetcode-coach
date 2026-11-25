@@ -1,5 +1,17 @@
 # AI Daily LeetCode Coach
 
+## Local browser app (macOS)
+
+Double-click **LeetCode Coach.app** in this folder. It opens a private browser page at `http://127.0.0.1:18517` without asking you to type Terminal commands. Keep this folder in place: the launcher refers to this local checkout and uses the existing Python environment installed on this Mac. Closing the browser tab does not erase your history; you can open the app again at any time.
+
+The local app saves practice history in `.local_data/practice.sqlite3` (excluded from Git). Its Settings page lets you add your LeetCode **username** for profile links and opens individual problems on LeetCode. Your LeetCode submissions are **not automatically synced**; log your result in the app after solving. No LeetCode password or browser cookie is requested. You can import the old CLI `state.json` in Settings and download a CSV backup from History.
+
+For optional AI planning and feedback, paste an **Anthropic API key** in Settings and click **Save API key on this Mac**. The app remembers it in a user-only local file (`.local_data/claude_api_key`, mode 0600) that Git ignores; use **Forget saved key** to remove it. This is a plain-text file readable by your Mac user account, not an encrypted Keychain item. Only the context shown by this app is sent when you click a Claude button. Claude Pro does not include API usage; some other plans may include API credits. The tracker works without an API key and never calls Ollama.
+
+The previously deployed `cloud_app.py` is separate and continues to use Supabase. It does not automatically share history with this local app.
+
+## Original command-line app
+
 This fork replaces the original Claude API integration with a locally hosted Qwen model through Ollama. It allows users to generate personalized LeetCode practice plans and track their progress without paid API access.
 
 An AI coach that decides exactly what you should practice each day. Not a
